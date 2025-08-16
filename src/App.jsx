@@ -42,6 +42,7 @@ export default function App() {
   const [line, setLine] = useState(null);
   const [players, setPlayers] = useState([]);
   const [socket, setSocket] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const newSocket = io(SOCKET_URL, {
@@ -49,12 +50,14 @@ export default function App() {
     });
 
     newSocket.on("connect", () => {
-      console.log("✅ Connected:", newSocket.id);
+      // console.log("✅ Connected:", newSocket.id);
       newSocket.emit("joinRoom", initialRoom);
     });
 
-    newSocket.on("joined", ({ symbol }) => {
+    newSocket.on("joined", ({ symbol, isAdmin }) => {
+      // console.log("➡️ Assigned symbol:", symbol, "Admin:", isAdmin);
       setSymbol(symbol);
+      setIsAdmin(isAdmin);
     });
 
     newSocket.on("state", ({ board, currentPlayer, winner, line, players }) => {
@@ -81,7 +84,11 @@ export default function App() {
 
   const reset = () => socket.emit("reset");
 
-  const shareUrl = useMemo(() => window.location.href, []);
+  const shareUrl = useMemo(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("room", initialRoom);
+    return url.toString();
+  }, [initialRoom]);
 
   const cellClasses = (i) => {
     const inWin = line?.includes(i);
@@ -123,12 +130,14 @@ export default function App() {
             >
               📋 Copy Invite Link
             </button>
-            <button
-              className="px-4 py-2 rounded-2xl bg-yellow-300 text-black font-semibold hover:bg-yellow-200 active:scale-95 transition"
-              onClick={reset}
-            >
-              Reset
-            </button>
+            {isAdmin && (
+              <button
+                className="px-4 py-2 rounded-2xl bg-yellow-300 text-black font-semibold hover:bg-yellow-200 active:scale-95 transition"
+                onClick={reset}
+              >
+                Reset
+              </button>
+            )}
           </div>
         </div>
 
