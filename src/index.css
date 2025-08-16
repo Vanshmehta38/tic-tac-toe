@@ -2,10 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
 }
 
 :root {
   color-scheme: light dark;
+}
+
+.title-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.game-logo {
+  border-radius: 50%
 }

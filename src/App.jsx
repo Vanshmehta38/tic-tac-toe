@@ -111,8 +111,13 @@ export default function App() {
     <div className="min-h-screen text-white flex items-center justify-center p-4 bg-gradient-to-br from-purple-500 to-indigo-600">
       <div className="w-full max-w-xl">
         <div className="mb-6 text-center">
-          <h1 className="text-4xl font-black drop-shadow">
-            🎮 Online Tic Tac Toe
+          <h1 className="text-4xl font-black drop-shadow title-box">
+            <img
+              src="/logo.png"
+              alt="App Logo"
+              className="w-10 h-10 rounded-lg shadow-md"
+            />{" "}
+            Tic Tac Toe
           </h1>
           <p className="mt-2 opacity-90">
             Room:{" "}
