@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
+import confetti from "canvas-confetti";
 
 const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:4000";
 
@@ -13,16 +14,12 @@ function randomRoom() {
 }
 
 export default function App() {
-  // RoomId persists between refreshes
   const [roomId, setRoomId] = useState(
     () => localStorage.getItem("roomId") || ""
   );
   const [showPopup, setShowPopup] = useState(!roomId);
 
-  // ✅ userId as a stable ref (never changes, no warning)
   const userIdRef = useRef(localStorage.getItem("userId") || uuidv4());
-
-  // Store userId in localStorage once
   useEffect(() => {
     localStorage.setItem("userId", userIdRef.current);
   }, []);
@@ -35,6 +32,9 @@ export default function App() {
   const [line, setLine] = useState(null);
   const [players, setPlayers] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // ✅ Scoreboard
+  const [scores, setScores] = useState({ X: 0, O: 0, draw: 0 });
 
   useEffect(() => {
     if (!roomId) return;
@@ -54,9 +54,32 @@ export default function App() {
     newSocket.on("state", ({ board, currentPlayer, winner, line, players }) => {
       setBoard(board);
       setCurrentPlayer(currentPlayer);
-      setWinner(winner);
       setLine(line);
       setPlayers(players);
+
+      // ✅ Handle winner updates
+      if (winner && winner !== null) {
+        setWinner(winner);
+
+        // Confetti for winner
+        if (winner !== "draw") {
+          confetti({
+            particleCount: 120,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        }
+
+        // Update scoreboard
+        setScores((prev) => {
+          if (winner === "X") return { ...prev, X: prev.X + 1 };
+          if (winner === "O") return { ...prev, O: prev.O + 1 };
+          if (winner === "draw") return { ...prev, draw: prev.draw + 1 };
+          return prev;
+        });
+      } else {
+        setWinner(null);
+      }
     });
 
     setSocket(newSocket);
@@ -81,6 +104,7 @@ export default function App() {
     setSymbol(null);
     setBoard(Array(9).fill(null));
     setPlayers([]);
+    setScores({ X: 0, O: 0, draw: 0 }); // clear scores on leave
   };
 
   const cellClasses = (i) => {
@@ -104,8 +128,13 @@ export default function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
         <div className="bg-white/10 p-6 rounded-2xl backdrop-blur-lg max-w-md w-full text-center">
-          <h1 className="text-3xl font-black mb-2">
-            Welcome to 🎮 Tic Tac Toe
+          <h1 className="text-3xl font-black mb-2 flex gap-2">
+            <img
+              src="/logo.png"
+              alt="App Logo"
+              className="w-10 h-10 rounded-lg shadow-md text-center"
+            />{" "}
+            Welcome to Tic Tac Toe
           </h1>
           <p className="opacity-90 mb-6">
             Play online with your friends! Enter a Room ID to join, or create a
@@ -153,8 +182,13 @@ export default function App() {
     <div className="min-h-screen text-white flex items-center justify-center p-4 bg-gradient-to-br from-purple-500 to-indigo-600">
       <div className="w-full max-w-xl">
         <div className="mb-6 text-center">
-          <h1 className="text-4xl font-black drop-shadow">
-            🎮 Online Tic Tac Toe
+          <h1 className="text-4xl font-black drop-shadow title-box">
+            <img
+              src="/logo.png"
+              alt="App Logo"
+              className="w-10 h-10 rounded-lg shadow-md"
+            />{" "}
+            Tic Tac Toe
           </h1>
           <p className="mt-2">
             Room ID: <span className="font-mono">{roomId}</span>
@@ -181,6 +215,14 @@ export default function App() {
               Leave Room
             </button>
           </div>
+        </div>
+
+        {/* ✅ Scoreboard */}
+        <div className="mb-4 text-center">
+          <h2 className="text-2xl font-bold">🏆 Scoreboard</h2>
+          <p>
+            X: {scores.X} | O: {scores.O} | Draws: {scores.draw}
+          </p>
         </div>
 
         <div className="mb-4 text-center">
