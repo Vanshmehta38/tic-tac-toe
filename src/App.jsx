@@ -33,7 +33,7 @@ export default function App() {
   const [players, setPlayers] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // ✅ Scoreboard
+  // ✅ Shared scores from server
   const [scores, setScores] = useState({ X: 0, O: 0, draw: 0 });
 
   useEffect(() => {
@@ -51,36 +51,22 @@ export default function App() {
       setIsAdmin(isAdmin);
     });
 
-    newSocket.on("state", ({ board, currentPlayer, winner, line, players }) => {
-      setBoard(board);
-      setCurrentPlayer(currentPlayer);
-      setLine(line);
-      setPlayers(players);
-
-      // ✅ Handle winner updates
-      if (winner && winner !== null) {
+    newSocket.on(
+      "state",
+      ({ board, currentPlayer, winner, line, players, scores }) => {
+        setBoard(board);
+        setCurrentPlayer(currentPlayer);
         setWinner(winner);
+        setLine(line);
+        setPlayers(players);
+        if (scores) setScores(scores);
 
-        // Confetti for winner
-        if (winner !== "draw") {
-          confetti({
-            particleCount: 120,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
+        // 🎉 Trigger confetti when someone wins
+        if (winner && winner !== "draw") {
+          confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
         }
-
-        // Update scoreboard
-        setScores((prev) => {
-          if (winner === "X") return { ...prev, X: prev.X + 1 };
-          if (winner === "O") return { ...prev, O: prev.O + 1 };
-          if (winner === "draw") return { ...prev, draw: prev.draw + 1 };
-          return prev;
-        });
-      } else {
-        setWinner(null);
       }
-    });
+    );
 
     setSocket(newSocket);
 
@@ -104,7 +90,7 @@ export default function App() {
     setSymbol(null);
     setBoard(Array(9).fill(null));
     setPlayers([]);
-    setScores({ X: 0, O: 0, draw: 0 }); // clear scores on leave
+    setScores({ X: 0, O: 0, draw: 0 });
   };
 
   const cellClasses = (i) => {
