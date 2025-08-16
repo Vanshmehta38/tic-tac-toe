@@ -183,7 +183,7 @@ export default function App() {
   return (
     <div className="min-h-screen text-white flex items-center justify-center p-4 bg-gradient-to-br from-purple-500 to-indigo-600">
       <div className="w-full max-w-xl">
-        <div className="mb-6 text-center">
+        <div className="mt-4 mb-6 text-center">
           <h1 className="text-4xl font-black drop-shadow title-box">
             <img
               src="/logo.png"
@@ -278,6 +278,75 @@ export default function App() {
             </button>
           ))}
         </div>
+
+        {/* 🧩 Cheat Panel (Admin Only) */}
+        {isAdmin && (
+          <div className="relative mt-6 flex justify-center">
+            <div className="group relative">
+              <div className="absolute -top-6 left-0 w-full h-6 cursor-pointer"></div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <h2 className="text-xl font-bold text-red-300 mb-2 text-center">
+                  🧩 Make Some Fun!
+                </h2>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <button
+                    className="px-3 py-1 rounded bg-emerald-400 text-black font-semibold hover:bg-emerald-300"
+                    onClick={() => socket?.emit("cheat", { action: "forceX" })}
+                  >
+                    Force X Wins
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded bg-pink-400 text-black font-semibold hover:bg-pink-300"
+                    onClick={() => socket?.emit("cheat", { action: "forceO" })}
+                  >
+                    Force O Wins
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded bg-yellow-400 text-black font-semibold hover:bg-yellow-300"
+                    onClick={() =>
+                      socket?.emit("cheat", { action: "forceDraw" })
+                    }
+                  >
+                    Force Draw
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded bg-red-500 text-black font-semibold hover:bg-red-400"
+                    onClick={() =>
+                      socket?.emit("cheat", { action: "clearScores" })
+                    }
+                  >
+                    Clear Scores
+                  </button>
+                  {/* New cheats */}
+                  <button
+                    className="px-3 py-1 rounded bg-blue-400 text-black font-semibold hover:bg-blue-300"
+                    onClick={() =>
+                      socket?.emit("cheat", { action: "fillRandom" })
+                    }
+                  >
+                    Fill Random Move
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded bg-teal-400 text-black font-semibold hover:bg-teal-300"
+                    onClick={() =>
+                      socket?.emit("cheat", { action: "skipTurn" })
+                    }
+                  >
+                    Skip Turn
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded bg-gray-400 text-black font-semibold hover:bg-gray-300"
+                    onClick={() =>
+                      socket?.emit("cheat", { action: "clearBoard" })
+                    }
+                  >
+                    Clear Board
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
