@@ -96,11 +96,11 @@ export default function App() {
           localStorage.setItem("cheatEnabled", newState ? "true" : "false");
 
           if (newState) {
-            toast("Cheat Mode ACTIVATED!", {
+            toast("Fun Mode Activated!", {
               icon: "🧩",
             });
           } else {
-            toast("Cheat Mode DISABLED!", {
+            toast("Fun Mode Deactivated!", {
               icon: "🚫",
             });
           }
@@ -113,7 +113,7 @@ export default function App() {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [cheatEnabled]);
+  }, [isAdmin, cheatEnabled]);
 
   const handleMove = (i) => {
     if (!socket) return;
@@ -221,12 +221,12 @@ export default function App() {
         position="bottom-right"
         reverseOrder={false}
         toastOptions={{
-          duration: 500,
+          duration: 800,
         }}
       />
       <div className="min-h-screen text-white flex items-center justify-center p-4 bg-gradient-to-br from-purple-500 to-indigo-600">
         <div className="w-full max-w-xl">
-          <div className="mt-4 mb-6 text-center">
+          <div className={`${cheatEnabled ? "mt-7" : "mt-3"} mb-6 text-center`}>
             <h1 className="text-4xl font-black drop-shadow title-box">
               <img
                 src="/logo.png"
@@ -399,20 +399,20 @@ export default function App() {
 
         {/* 🔖 Cheat Mode Badge (Admin Only) */}
         {/* {isAdmin && (
-            <div
-              className="fixed bottom-4 right-4 px-3 py-1 rounded-lg shadow-lg text-sm font-bold
+          <div
+            className="fixed bottom-4 right-4 px-3 py-1 rounded-lg shadow-lg text-sm font-bold
                   transition-colors duration-300
                   bg-gray-700 text-white
                   border border-gray-500
                   opacity-80"
-            >
-              {cheatEnabled ? (
-                <span className="text-green-400">🧩 Fun Mode: ON</span>
-              ) : (
-                <span className="text-red-400">🚫 Fun Mode: OFF</span>
-              )}
-            </div>
-          )} */}
+          >
+            {cheatEnabled ? (
+              <span className="text-green-400">🧩 Fun Mode: ON</span>
+            ) : (
+              <span className="text-red-400">🚫 Fun Mode: OFF</span>
+            )}
+          </div>
+        )} */}
       </div>
     </>
   );
