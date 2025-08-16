@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 
@@ -13,13 +13,19 @@ function randomRoom() {
 }
 
 export default function App() {
+  // RoomId persists between refreshes
   const [roomId, setRoomId] = useState(
     () => localStorage.getItem("roomId") || ""
   );
-  const [userId, setUserId] = useState(
-    () => localStorage.getItem("userId") || uuidv4()
-  );
   const [showPopup, setShowPopup] = useState(!roomId);
+
+  // ✅ userId as a stable ref (never changes, no warning)
+  const userIdRef = useRef(localStorage.getItem("userId") || uuidv4());
+
+  // Store userId in localStorage once
+  useEffect(() => {
+    localStorage.setItem("userId", userIdRef.current);
+  }, []);
 
   const [socket, setSocket] = useState(null);
   const [symbol, setSymbol] = useState(null);
@@ -31,17 +37,13 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem("userId", userId);
-  }, [userId]);
-
-  useEffect(() => {
     if (!roomId) return;
 
     const newSocket = io(SOCKET_URL, { transports: ["polling", "websocket"] });
 
     newSocket.on("connect", () => {
       console.log("✅ Connected:", newSocket.id);
-      newSocket.emit("joinRoom", { roomId, userId });
+      newSocket.emit("joinRoom", { roomId, userId: userIdRef.current });
     });
 
     newSocket.on("joined", ({ symbol, isAdmin }) => {
@@ -60,7 +62,7 @@ export default function App() {
     setSocket(newSocket);
 
     return () => newSocket.disconnect();
-  }, [roomId, userId]);
+  }, [roomId]);
 
   const handleMove = (i) => {
     if (!socket) return;
@@ -102,13 +104,8 @@ export default function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
         <div className="bg-white/10 p-6 rounded-2xl backdrop-blur-lg max-w-md w-full text-center">
-          <h1 className="text-3xl font-black mb-2 flex gap-2">
-            <img
-              src="/logo.png"
-              alt="App Logo"
-              className="w-10 h-10 rounded-lg shadow-md text-center"
-            />{" "}
-            Welcome to Tic Tac Toe
+          <h1 className="text-3xl font-black mb-2">
+            Welcome to 🎮 Tic Tac Toe
           </h1>
           <p className="opacity-90 mb-6">
             Play online with your friends! Enter a Room ID to join, or create a
@@ -156,13 +153,8 @@ export default function App() {
     <div className="min-h-screen text-white flex items-center justify-center p-4 bg-gradient-to-br from-purple-500 to-indigo-600">
       <div className="w-full max-w-xl">
         <div className="mb-6 text-center">
-          <h1 className="text-4xl font-black drop-shadow title-box">
-            <img
-              src="/logo.png"
-              alt="App Logo"
-              className="w-10 h-10 rounded-lg shadow-md"
-            />{" "}
-            Tic Tac Toe
+          <h1 className="text-4xl font-black drop-shadow">
+            🎮 Online Tic Tac Toe
           </h1>
           <p className="mt-2">
             Room ID: <span className="font-mono">{roomId}</span>
