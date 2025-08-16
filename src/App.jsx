@@ -119,13 +119,6 @@ export default function App() {
   const xPlayer = activePlayers.find((p) => p.symbol === "X");
   const oPlayer = activePlayers.find((p) => p.symbol === "O");
 
-  // Player-wise scoreboard rows (only show players who have entries or active)
-  const scoreboardRows = activePlayers.map((p) => ({
-    userId: p.userId,
-    label: `${mask(p.userId)} (${p.symbol})`,
-    wins: scores.byUser?.[p.userId] ?? 0,
-  }));
-
   if (showPopup) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
