@@ -28,24 +28,36 @@ export default function App() {
     }
   }, []); // eslint-disable-line
 
-  const [socket] = useState(() =>
-    io(SOCKET_URL, { transports: ["websocket"] })
-  );
+  // 🔑 WebSocket only, no more polling warnings
+  // const [socket] = useState(() =>
+  //   io(SOCKET_URL, {
+  //     transports: ["polling", "websocket"], // ✅ allow fallback
+  //   })
+  // );
+
   const [symbol, setSymbol] = useState(null);
   const [board, setBoard] = useState(Array(9).fill(null));
   const [currentPlayer, setCurrentPlayer] = useState("X");
   const [winner, setWinner] = useState(null);
   const [line, setLine] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    socket.emit("joinRoom", initialRoom);
+    const newSocket = io(SOCKET_URL, {
+      transports: ["polling", "websocket"],
+    });
 
-    socket.on("joined", ({ symbol }) => {
+    newSocket.on("connect", () => {
+      console.log("✅ Connected:", newSocket.id);
+      newSocket.emit("joinRoom", initialRoom);
+    });
+
+    newSocket.on("joined", ({ symbol }) => {
       setSymbol(symbol);
     });
 
-    socket.on("state", ({ board, currentPlayer, winner, line, players }) => {
+    newSocket.on("state", ({ board, currentPlayer, winner, line, players }) => {
       setBoard(board);
       setCurrentPlayer(currentPlayer);
       setWinner(winner);
@@ -53,10 +65,12 @@ export default function App() {
       setPlayers(players);
     });
 
+    setSocket(newSocket);
+
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
     };
-  }, [socket, initialRoom]);
+  }, [initialRoom]);
 
   const isMyTurn = symbol && currentPlayer === symbol && !winner;
 
