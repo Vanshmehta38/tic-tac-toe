@@ -19,6 +19,7 @@ export default function App() {
   );
   const [showPopup, setShowPopup] = useState(!roomId);
 
+  // Stable identity for player
   const userIdRef = useRef(localStorage.getItem("userId") || uuidv4());
   useEffect(() => {
     localStorage.setItem("userId", userIdRef.current);
@@ -30,19 +31,19 @@ export default function App() {
   const [currentPlayer, setCurrentPlayer] = useState("X");
   const [winner, setWinner] = useState(null);
   const [line, setLine] = useState(null);
+
+  // players: [{ userId, symbol }]
   const [players, setPlayers] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // ✅ Shared scores from server
-  const [scores, setScores] = useState({ X: 0, O: 0, draw: 0 });
+  // Shared scores from server: { byUser: { [userId]: wins }, draws: number }
+  const [scores, setScores] = useState({ byUser: {}, draws: 0 });
 
   useEffect(() => {
     if (!roomId) return;
-
     const newSocket = io(SOCKET_URL, { transports: ["polling", "websocket"] });
 
     newSocket.on("connect", () => {
-      console.log("✅ Connected:", newSocket.id);
       newSocket.emit("joinRoom", { roomId, userId: userIdRef.current });
     });
 
@@ -58,10 +59,10 @@ export default function App() {
         setCurrentPlayer(currentPlayer);
         setWinner(winner);
         setLine(line);
-        setPlayers(players);
+        setPlayers(players || []);
         if (scores) setScores(scores);
 
-        // 🎉 Trigger confetti when someone wins
+        // Party animation on win
         if (winner && winner !== "draw") {
           confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
         }
@@ -69,7 +70,6 @@ export default function App() {
     );
 
     setSocket(newSocket);
-
     return () => newSocket.disconnect();
   }, [roomId]);
 
@@ -90,7 +90,7 @@ export default function App() {
     setSymbol(null);
     setBoard(Array(9).fill(null));
     setPlayers([]);
-    setScores({ X: 0, O: 0, draw: 0 });
+    setScores({ byUser: {}, draws: 0 });
   };
 
   const cellClasses = (i) => {
@@ -109,6 +109,22 @@ export default function App() {
         : "text-white",
     ].join(" ");
   };
+
+  // Helpers
+  const mask = (uid) =>
+    uid === userIdRef.current ? "You" : `${uid.slice(0, 4)}…${uid.slice(-4)}`;
+  const activePlayers = players.filter(
+    (p) => p.symbol === "X" || p.symbol === "O"
+  );
+  const xPlayer = activePlayers.find((p) => p.symbol === "X");
+  const oPlayer = activePlayers.find((p) => p.symbol === "O");
+
+  // Player-wise scoreboard rows (only show players who have entries or active)
+  const scoreboardRows = activePlayers.map((p) => ({
+    userId: p.userId,
+    label: `${mask(p.userId)} (${p.symbol})`,
+    wins: scores.byUser?.[p.userId] ?? 0,
+  }));
 
   if (showPopup) {
     return (
@@ -203,11 +219,33 @@ export default function App() {
           </div>
         </div>
 
-        {/* ✅ Scoreboard */}
+        {/* 🏆 Compact Scoreboard with Players */}
         <div className="mb-4 text-center">
           <h2 className="text-2xl font-bold">🏆 Scoreboard</h2>
-          <p>
-            X: {scores.X} | O: {scores.O} | Draws: {scores.draw}
+          <p className="mt-2">
+            {xPlayer ? (
+              <>
+                {mask(xPlayer.userId)} (X):{" "}
+                <span className="font-bold">
+                  {scores.byUser?.[xPlayer.userId] ?? 0}
+                </span>
+              </>
+            ) : (
+              "X: —"
+            )}
+            {" | "}
+            {oPlayer ? (
+              <>
+                {mask(oPlayer.userId)} (O):{" "}
+                <span className="font-bold">
+                  {scores.byUser?.[oPlayer.userId] ?? 0}
+                </span>
+              </>
+            ) : (
+              "O: —"
+            )}
+            {" | "}
+            Draws: <span className="font-bold">{scores.draws ?? 0}</span>
           </p>
         </div>
 
@@ -219,11 +257,12 @@ export default function App() {
             {winner
               ? winner === "draw"
                 ? "It's a draw!"
-                : `Winner: ${winner}`
+                : `Winner: ${winner} (${
+                    winner === "X"
+                      ? mask(xPlayer?.userId || "")
+                      : mask(oPlayer?.userId || "")
+                  })`
               : `Turn: ${currentPlayer}`}
-          </p>
-          <p className="text-sm opacity-80 mt-1">
-            Players in room: {players.join(" , ") || "—"}
           </p>
         </div>
 
